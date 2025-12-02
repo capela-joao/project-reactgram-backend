@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import './config/db.js';
+import { connectDB } from './config/db.js';
 
 import express from 'express';
 import path from 'path';
@@ -25,7 +25,13 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/', router);
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`App rodando na porta ${port}`);
-  console.log(`${port}`);
-});
+const startServer = async () => {
+  await connectDB();
+
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`App rodando na porta ${port}`);
+    console.log(`${port}`);
+  });
+};
+
+startServer();

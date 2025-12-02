@@ -1,17 +1,11 @@
 import mongoose from 'mongoose';
 
-const conn = async () => {
+export const connectDB = async () => {
   try {
-    const dbConn = await mongoose.connect(process.env.MONGO_URI as string);
-
+    await mongoose.connect(process.env.MONGO_URI as string);
     console.log('Conectou ao banco!');
-
-    return dbConn;
   } catch (err: any) {
     console.log('Erro ao conectar', err);
+    process.exit(1);
   }
 };
-
-conn();
-
-export default conn;
