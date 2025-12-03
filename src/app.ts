@@ -5,6 +5,8 @@ import { connectDB } from './config/db.js';
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+
 import { fileURLToPath } from 'url';
 
 import router from './routes/Router.js';
@@ -16,7 +18,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
+app.use(cookieParser());
+
+app.use(cors({ credentials: true, origin: 'http://localhost:5173' }));
 
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
