@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
 export const imageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -11,7 +12,13 @@ export const imageStorage = multer.diskStorage({
       folder = 'photos';
     }
 
-    cb(null, `uploads/${folder}`);
+    const uploadPath = `uploads/${folder}`;
+
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    cb(null, uploadPath);
   },
 
   filename: (req, file, cb) => {
