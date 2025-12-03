@@ -4,7 +4,11 @@ import type { Request, Response, NextFunction } from 'express';
 
 const jwtSecret = process.env.JWT_TOKEN as string;
 
-const authGuard = async (req: Request, res: Response, next: NextFunction) => {
+export const authGuard = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -29,4 +33,10 @@ const authGuard = async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) {
     res.status(401).json({ erros: ['Token inválido'] });
   }
+};
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const user = req.user;
+
+  res.status(200).json(user);
 };

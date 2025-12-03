@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import type { Request, Response } from 'express';
-
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -67,4 +67,61 @@ export const login = async (req: Request, res: Response) => {
     profileImage: user.profileImage,
     token: generateToken(user._id),
   });
+};
+
+export const update = async (req: Request, res: Response) => {
+  const { name, password, bio } = req.body;
+
+  let profileImage = null;
+
+  if (req.file) {
+    profileImage = req.file.filename;
+  }
+
+  const reqUser = req.user;
+
+  const user = await User.findById(reqUser._id).select('-password');
+
+  if (!user) {
+    return;
+  }
+
+  if (name) {
+    user.name = name;
+  }
+
+  if (password) {
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    user.password = passwordHash;
+  }
+
+  if (bio) {
+    user.bio = bio;
+  }
+
+  if (profileImage) {
+    user.profileImage = profileImage;
+  }
+
+  await user.save();
+
+  res.status(200).json(user);
+};
+
+export const getUserById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findOne({ _id: id }).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ errors: ['Usuário não encontrado.'] });
+    }
+
+    res.status(200).json(user);
+  } catch (err) {
+    return res.status(422).json({ errors: ['Usuário não encontrado.'] });
+  }
 };
