@@ -10,12 +10,8 @@ export const authGuard = async (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ errors: ['Acesso negado!'] });
-  }
-
-  const token = authHeader && authHeader.split(' ')[1];
+  const tokenFromHeader = authHeader?.split(' ')[1];
+  const token = tokenFromHeader || req.cookies.token;
 
   if (!token) {
     return res.status(401).json({ errors: ['Token não fornecido!'] });
@@ -37,6 +33,6 @@ export const authGuard = async (
 
 export const getCurrentUser = async (req: Request, res: Response) => {
   const user = req.user;
-
+  res.setHeader('Cache-Control', 'no-store');
   res.status(200).json(user);
 };
