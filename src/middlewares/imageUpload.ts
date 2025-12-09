@@ -35,5 +35,3 @@ export const imageUpload = multer({
     cb(null, true);
   },
 });
-
-export const photoUpdateValidation = () => {};

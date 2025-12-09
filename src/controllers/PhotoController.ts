@@ -160,7 +160,7 @@ export const likePhoto = async (req: Request, res: Response) => {
   const reqUser = req.user;
 
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(404).json({ errors: ['Id Inválido'] });
+    return res.status(400).json({ errors: ['Id Inválido'] });
   }
   try {
     const photo = await Photo.findById(id);
@@ -195,7 +195,7 @@ export const commentPhoto = async (req: Request, res: Response) => {
   const reqUser = req.user;
 
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(404).json({ errors: ['ID inválido.'] });
+    return res.status(400).json({ errors: ['ID inválido.'] });
   }
 
   try {
@@ -222,13 +222,27 @@ export const commentPhoto = async (req: Request, res: Response) => {
 
     await photo.save();
 
-    return res
-      .status(200)
-      .json({
-        comment: userComment,
-        message: 'O comentário foi feito com sucesso.',
-      });
+    return res.status(200).json({
+      comment: userComment,
+      message: 'O comentário foi feito com sucesso.',
+    });
   } catch (err) {
     return res.status(500).json({ errors: ['Erro ao comentar foto.'] });
+  }
+};
+
+export const searchPhotos = async (req: Request, res: Response) => {
+  const { q } = req.query;
+
+  if (!q || typeof q !== 'string') {
+    return res.status(400).json({ errors: ['Parâmetro q é obrigatório'] });
+  }
+
+  try {
+    const photos = await Photo.find({ title: new RegExp(q, 'i') }).exec();
+
+    res.status(200).json(photos);
+  } catch (err) {
+    return res.status(500).json({ errors: ['Erro ao procurar foto.'] });
   }
 };

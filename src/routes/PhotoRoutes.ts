@@ -14,6 +14,7 @@ import {
   getUserPhotos,
   insertPhoto,
   likePhoto,
+  searchPhotos,
   updatePhoto,
 } from '../controllers/PhotoController.js';
 import { imageUpload } from '../middlewares/imageUpload.js';
@@ -35,6 +36,7 @@ router.delete('/:id', authGuard, deletePhoto);
 router.get('/', authGuard, getAllPhotos);
 router.get('/user/:id', authGuard, getUserPhotos);
 router.get('/:id', authGuard, getPhotoById);
+router.get('/search', authGuard, searchPhotos);
 
 router.put('/:id', authGuard, photoUpdateValidation(), validate, updatePhoto);
 router.put('/like/:id', authGuard, likePhoto);
