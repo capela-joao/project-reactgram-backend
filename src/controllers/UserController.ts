@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import type { Request, Response } from 'express';
-import mongoose from 'mongoose';
+import mongoose, { mongo } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -15,67 +15,75 @@ const generateToken = (id: any) => {
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  try {
+    const user = await User.findOne({ email });
 
-  if (user) {
-    res.status(422).json({ errors: ['Por favor, utilize outro e-mail.'] });
-    return;
-  }
+    if (user) {
+      res.status(422).json({ errors: ['Por favor, utilize outro e-mail.'] });
+      return;
+    }
 
-  const salt = await bcrypt.genSalt();
-  const passwordHash = await bcrypt.hash(password, salt);
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(password, salt);
 
-  const newUser = await User.create({
-    name,
-    email,
-    password: passwordHash,
-  });
-
-  if (!newUser) {
-    res.status(422).json({
-      errors: ['Houve um erro, por favor tente novamente mais tarde'],
+    const newUser = await User.create({
+      name,
+      email,
+      password: passwordHash,
     });
-    return;
+
+    if (!newUser) {
+      res.status(422).json({
+        errors: ['Houve um erro, por favor tente novamente mais tarde'],
+      });
+      return;
+    }
+    res.status(201).json({
+      _id: newUser._id,
+      token: generateToken(newUser._id),
+    });
+  } catch (err) {
+    return res.status(500).json({ errors: ['Erro ao cadastrar usuário.'] });
   }
-  res.status(201).json({
-    _id: newUser._id,
-    token: generateToken(newUser._id),
-  });
 };
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  try {
+    const user = await User.findOne({ email });
 
-  if (!user) {
-    return res.status(404).json({ errors: ['Usuário não encontrado.'] });
+    if (!user) {
+      return res.status(404).json({ errors: ['Usuário não encontrado.'] });
+    }
+
+    if (!user.password) {
+      return res.status(500).json({ errors: ['Senha não encontrada.'] });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      return res.status(422).json({ errors: ['Senha inválida'] });
+    }
+
+    const token = generateToken(user._id);
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      _id: user._id,
+      profileImage: user.profileImage,
+      message: 'Login realizado com sucesso.',
+    });
+  } catch (err) {
+    return res.status(500).json({ errors: ['Erro ao efetuar login.'] });
   }
-
-  if (!user.password) {
-    return res.status(500).json({ errors: ['Senha não encontrada.'] });
-  }
-
-  const isPasswordCorrect = await bcrypt.compare(password, user.password);
-
-  if (!isPasswordCorrect) {
-    return res.status(422).json({ errors: ['Senha inválida'] });
-  }
-
-  const token = generateToken(user._id);
-
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: false,
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  return res.status(200).json({
-    _id: user._id,
-    profileImage: user.profileImage,
-    message: 'Login realizado com sucesso.',
-  });
 };
 
 export const update = async (req: Request, res: Response) => {
@@ -89,38 +97,47 @@ export const update = async (req: Request, res: Response) => {
 
   const reqUser = req.user;
 
-  const user = await User.findById(reqUser._id).select('-password');
+  try {
+    const user = await User.findById(reqUser._id);
 
-  if (!user) {
-    return;
+    if (!user) {
+      return res.status(404).json({ errors: ['Usuário não encontrado.'] });
+    }
+
+    if (name) {
+      user.name = name;
+    }
+
+    if (password) {
+      const salt = await bcrypt.genSalt();
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      user.password = passwordHash;
+    }
+
+    if (bio) {
+      user.bio = bio;
+    }
+
+    if (profileImage) {
+      user.profileImage = profileImage;
+    }
+
+    await user.save();
+
+    const { password: _, ...userData } = user.toObject();
+    res.status(200).json(userData);
+  } catch (err) {
+    return res.status(500).json({ errors: ['Erro ao atualizar usuário.'] });
   }
-
-  if (name) {
-    user.name = name;
-  }
-
-  if (password) {
-    const salt = await bcrypt.genSalt();
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    user.password = passwordHash;
-  }
-
-  if (bio) {
-    user.bio = bio;
-  }
-
-  if (profileImage) {
-    user.profileImage = profileImage;
-  }
-
-  await user.save();
-
-  res.status(200).json(user);
 };
 
 export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
+
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ errors: ['ID inválido.'] });
+  }
 
   try {
     const user = await User.findOne({ _id: id }).select('-password');
