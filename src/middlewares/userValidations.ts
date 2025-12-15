@@ -2,11 +2,21 @@ import { body } from 'express-validator';
 
 export const userCreateValidation = () => {
   return [
-    body('name')
+    body('firstName')
       .isString()
       .withMessage('O nome é obrigatório')
       .isLength({ min: 3 })
+      .withMessage('O nome precisa ter no mínimo 6 caracteres'),
+    body('lastName')
+      .isString()
+      .withMessage('O sobrenome é obrigatório')
+      .isLength({ min: 3 })
       .withMessage('O nome precisa ter no mínimo 3 caracteres'),
+    body('username')
+      .isString()
+      .withMessage('O usuário é obrigatório')
+      .isLength({ min: 3 })
+      .withMessage('O usuário precisa ter no mínimo 3 caracteres'),
     body('email')
       .isString()
       .withMessage('o e-mail é obrigatório')

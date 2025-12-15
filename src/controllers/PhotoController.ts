@@ -20,7 +20,7 @@ export const insertPhoto = async (req: Request, res: Response) => {
       image: image ?? null,
       title,
       userId: user._id,
-      userName: user.name ?? null,
+      userName: user.username ?? null,
     });
 
     if (!newPhoto) {
@@ -213,7 +213,7 @@ export const commentPhoto = async (req: Request, res: Response) => {
 
     const userComment = {
       comment,
-      userName: user.name,
+      userName: user.username,
       userImage: user.profileImage,
       userId: user._id,
     };

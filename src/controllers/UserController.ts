@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import mongoose, { mongo } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { MongoServerError } from 'mongodb';
 
 const jwtToken = process.env.JWT_TOKEN as string;
 
@@ -13,21 +14,16 @@ const generateToken = (id: any) => {
 };
 
 export const register = async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
+  const { firstName, lastName, username, email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
-
-    if (user) {
-      res.status(422).json({ errors: ['Por favor, utilize outro e-mail.'] });
-      return;
-    }
-
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
 
     const newUser = await User.create({
-      name,
+      firstName,
+      lastName,
+      username,
       email,
       password: passwordHash,
     });
@@ -42,7 +38,12 @@ export const register = async (req: Request, res: Response) => {
       _id: newUser._id,
       token: generateToken(newUser._id),
     });
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err instanceof MongoServerError && err.code === 11000) {
+      return res
+        .status(422)
+        .json({ errors: ['E-mail ou usuário já cadastrado.'] });
+    }
     return res.status(500).json({ errors: ['Erro ao cadastrar usuário.'] });
   }
 };
@@ -87,7 +88,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const { name, password, bio } = req.body;
+  const { firstName, lastName, password, bio } = req.body;
 
   let profileImage = null;
 
@@ -104,8 +105,12 @@ export const update = async (req: Request, res: Response) => {
       return res.status(404).json({ errors: ['Usuário não encontrado.'] });
     }
 
-    if (name) {
-      user.name = name;
+    if (firstName) {
+      user.firstName = firstName;
+    }
+
+    if (lastName) {
+      user.lastName = lastName;
     }
 
     if (password) {

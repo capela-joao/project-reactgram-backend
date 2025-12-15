@@ -27,7 +27,7 @@ export const authGuard = async (
     }
     next();
   } catch (err) {
-    res.status(401).json({ erros: ['Token inválido'] });
+    res.status(401).json({ errors: ['Token inválido'] });
   }
 };
 
