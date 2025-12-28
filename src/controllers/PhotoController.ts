@@ -19,8 +19,7 @@ export const insertPhoto = async (req: Request, res: Response) => {
     const newPhoto = await Photo.create({
       image: image ?? null,
       title,
-      userId: user._id,
-      userName: user.username ?? null,
+      user: user._id,
     });
 
     if (!newPhoto) {
@@ -54,7 +53,7 @@ export const deletePhoto = async (req: Request, res: Response) => {
       return;
     }
 
-    if (!photo.userId || !photo.userId.equals(reqUser._id)) {
+    if (!photo.user || !photo.user.equals(reqUser._id)) {
       res.status(403).json({
         errors: ['Você não tem permissão para deletar essa foto.'],
       });
@@ -77,6 +76,7 @@ export const deletePhoto = async (req: Request, res: Response) => {
 
 export const getAllPhotos = async (req: Request, res: Response) => {
   const photos = await Photo.find({})
+    .populate('user', 'username profileImage')
     .lean()
     .sort([['createdAt', -1]])
     .exec();
@@ -92,7 +92,8 @@ export const getUserPhotos = async (req: Request, res: Response) => {
   }
 
   try {
-    const photos = await Photo.find({ userId: new mongoose.Types.ObjectId(id) })
+    const photos = await Photo.find({ user: id })
+      .populate('user', 'username profileImage')
       .sort([['createdAt', -1]])
       .exec();
 
@@ -136,7 +137,7 @@ export const updatePhoto = async (req: Request, res: Response) => {
       return res.status(404).json({ errors: ['Foto não encontrada.'] });
     }
 
-    if (!photo.userId || !photo.userId.equals(reqUser._id)) {
+    if (!photo.user || !photo.user.equals(reqUser._id)) {
       return res.status(403).json({
         errors: ['Você não tem permissão para atualizar essa foto.'],
       });
@@ -239,7 +240,9 @@ export const searchPhotos = async (req: Request, res: Response) => {
   }
 
   try {
-    const photos = await Photo.find({ title: new RegExp(q, 'i') }).exec();
+    const photos = await Photo.find({ title: new RegExp(q, 'i') })
+      .populate('user', 'username profileImage')
+      .exec();
 
     res.status(200).json(photos);
   } catch (err) {

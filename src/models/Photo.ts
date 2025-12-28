@@ -7,9 +7,10 @@ const photoSchema = new Schema(
     title: String,
     likes: Array,
     comments: Array,
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
     },
     userName: String,
   },
