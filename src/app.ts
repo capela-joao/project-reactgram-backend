@@ -1,5 +1,8 @@
 import 'dotenv/config';
 
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './docs/swagger.js';
+
 import { connectDB } from './config/db.js';
 
 import express from 'express';
@@ -28,6 +31,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use('/', router);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const startServer = async () => {
   await connectDB();

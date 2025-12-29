@@ -52,10 +52,14 @@ export const loginValidation = () => {
 
 export const userUpdateValidation = () => {
   return [
-    body('name')
+    body('firstName')
       .optional()
       .isLength({ min: 3 })
       .withMessage('O nome precisa de pelo menos 3 caracteres'),
+    body('lastName')
+      .optional()
+      .isLength({ min: 3 })
+      .withMessage('O sobrenome precisa de pelo menos 3 caracteres'),
     body('password')
       .optional()
       .isLength({ min: 6 })
