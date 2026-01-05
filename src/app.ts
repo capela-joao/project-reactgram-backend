@@ -23,7 +23,12 @@ const app = express();
 
 app.use(cookieParser());
 
-app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+);
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
