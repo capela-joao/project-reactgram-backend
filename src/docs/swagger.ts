@@ -13,6 +13,10 @@ const options = {
         url: 'http://localhost:5001',
         description: 'Ambiente local',
       },
+      {
+        url: 'https://reactgram-backend.dev-joao.app.br',
+        description: 'Ambiente produção',
+      },
     ],
     tags: [
       {
