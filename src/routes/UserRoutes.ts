@@ -217,7 +217,16 @@ router.put(
  *         description: Logout realizado com sucesso
  */
 router.post('/logout', (req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    ...(process.env.NODE_ENV === 'production' && {
+      domain: '.dev-joao.app.br',
+    }),
+    path: '/',
+  });
+
   return res.status(200).json({ message: 'Logout realizado' });
 });
 
