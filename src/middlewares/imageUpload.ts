@@ -1,30 +1,14 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
 
-export const imageStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let folder = '';
-
-    if (req.baseUrl.includes('users')) {
-      folder = 'users';
-    } else if (req.baseUrl.includes('photos')) {
-      folder = 'photos';
-    }
-
-    const uploadPath = `uploads/${folder}`;
-
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    cb(null, uploadPath);
-  },
-
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+export const imageStorage = multer.memoryStorage();
 
 export const imageUpload = multer({
   storage: imageStorage,
@@ -34,4 +18,49 @@ export const imageUpload = multer({
     }
     cb(null, true);
   },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
+
+export const uploadToCloudinary = (
+  file: Express.Multer.File,
+  req: any
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    let folder = 'reactgram';
+
+    if (req.baseUrl.includes('users')) {
+      folder = 'reactgram/users';
+    }
+    if (req.baseUrl.includes('photos')) {
+      folder = 'reactgram/photos';
+    }
+    try {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          public_id: `${Date.now()}`,
+          resource_type: 'auto',
+        },
+        (error, result) => {
+          if (error) {
+            return reject(
+              new Error('Erro ao fazer upload de imagens no Cloudinary.')
+            );
+          }
+
+          if (!result) {
+            return reject(new Error('Erro desconhecido no upload de imagens.'));
+          }
+
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+          });
+        }
+      );
+      streamifier.createReadStream(file.buffer).pipe(uploadStream);
+    } catch (err) {
+      return reject(new Error('Erro ao processar upload de imagens.'));
+    }
+  });
+};

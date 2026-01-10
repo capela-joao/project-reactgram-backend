@@ -4,6 +4,7 @@ import mongoose, { mongo } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { MongoServerError } from 'mongodb';
+import { uploadToCloudinary } from '../middlewares/imageUpload.js';
 
 const jwtToken = process.env.JWT_TOKEN as string;
 
@@ -97,7 +98,14 @@ export const update = async (req: Request, res: Response) => {
   let profileImage = null;
 
   if (req.file) {
-    profileImage = req.file.filename;
+    try {
+      const result = await uploadToCloudinary(req.file, req);
+      profileImage = result.secure_url;
+    } catch (err) {
+      return res.status(500).json({
+        errors: ['Erro ao fazer upload de imagem.'],
+      });
+    }
   }
 
   const reqUser = req.user;

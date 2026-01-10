@@ -2,11 +2,10 @@ import Photo from '../models/Photo.js';
 import mongoose from 'mongoose';
 import type { Request, Response } from 'express';
 import User from '../models/User.js';
+import { uploadToCloudinary } from '../middlewares/imageUpload.js';
 
 export const insertPhoto = async (req: Request, res: Response) => {
   const { title } = req.body;
-  const image = req.file?.filename;
-
   const reqUser = req.user;
 
   try {
@@ -16,8 +15,21 @@ export const insertPhoto = async (req: Request, res: Response) => {
       return res.status(404).json({ errors: ['Usuário não encontrado'] });
     }
 
+    let image = null;
+
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(req.file, req);
+        image = result.secure_url;
+      } catch (err) {
+        return res.status(500).json({
+          errors: ['Erro ao fazer upload de imagem'],
+        });
+      }
+    }
+
     const newPhoto = await Photo.create({
-      image: image ?? null,
+      image,
       title,
       user: user._id,
     });
