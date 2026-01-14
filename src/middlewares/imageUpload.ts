@@ -24,7 +24,7 @@ export const imageUpload = multer({
 export const uploadToCloudinary = (
   file: Express.Multer.File,
   req: any
-): Promise<any> => {
+): Promise<{ secure_url: string; public_id: string }> => {
   return new Promise((resolve, reject) => {
     let folder = 'reactgram';
 
