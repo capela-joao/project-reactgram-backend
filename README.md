@@ -12,6 +12,7 @@ API REST para uma rede social de compartilhamento de fotos.
 - Listagem e busca de fotos
 - Curtidas e comentários
 - Exclusão de fotos pelo dono
+- Armazenamento de imagem via Cloudinary.
 
 ---
 
@@ -25,6 +26,7 @@ API REST para uma rede social de compartilhamento de fotos.
 - Multer
 - Swagger (OpenAPI)
 - Express Validator
+- Cloudinary
 
 ---
 
